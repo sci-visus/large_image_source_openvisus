@@ -52,30 +52,28 @@ Before starting
 (OPTIONAL) Preliminary clean all the stuff
 - NOTE: **this will destroy any existing data**
 
+Edit the file `deploy/girder.cfg` and change it as needed
+
+To Run in "production":
+
 ```bash
 cd deploy
-docker-compose down --volumes
-docker stop $(docker ps -a -q)
-docker container prune
-docker volume rm $(docker volume ls -q)
+docker-compose build
+docker-compose up -d
+
+# eventually check cache
+# docker-compose exec  girder /bin/bash
+# du -hs /root/visus/cache
+
 ```
 
-
 Connect using the browser:
-- NOTES: **DO NOT USE 0.0.0.0  since it does NOT work in WSL2**
+- NOTES: in WSL2 DO NOT USE **0.0.0.0** since it does NOT work 
 
 ```ini
 URL=http://localhost:8080  
 USERNAME=admin
 PASSWORD=password
-```
-
-To Run in production:
-
-```bash
-cd deploy
-docker-compose build
-docker-compose up
 ```
 
 
@@ -84,6 +82,15 @@ To Run in debug mode
 ```bash
 
 cd deploy
+
+# OPTIONAL, clean up old stuff
+if [[ 1 == 0 ]] ; then
+  docker-compose down --volumes
+  docker stop $(docker ps -a -q)
+  docker container prune
+  docker volume rm $(docker volume ls -q)
+fi
+
 docker-compose build
 
 # start mongodb in background
