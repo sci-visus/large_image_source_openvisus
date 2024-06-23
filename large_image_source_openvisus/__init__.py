@@ -73,6 +73,7 @@ class OpenVisusTileSource(large_image.tilesource.TileSource, metaclass=LruCacheM
 		print(f"LoadDataset url={url}")
 		self.db=ov.LoadDataset(url)
 		self.bitmask=self.db.getBitmask().toString()
+		self.access=self.db.createAccessForBlockQuery()
 		print(self.bitmask)
 		self.sizeY,self.sizeX=self.db.shape
 
@@ -144,7 +145,7 @@ class OpenVisusTileSource(large_image.tilesource.TileSource, metaclass=LruCacheM
 		y1,y2=self.sizeY-y2,self.sizeY-y1
 
 		print(f"getTile x={x} y={y} z={z} tileWidth={self.tileWidth} tileHeight={self.tileHeight} x1={x1} y1={y1} x2={x2} y2={y2} max_resolution={max_resolution}")
-		tile=self.db.read(x=[x1,x2],y=[y1,y2],max_resolution=max_resolution)
+		tile=self.db.read(x=[x1,x2],y=[y1,y2],max_resolution=max_resolution, access=self.access)
 		# can be smaller because I am on the boundary
 		assert(tile.shape[0]<=self.tileHeight and tile.shape[1]<=self.tileWidth)
 

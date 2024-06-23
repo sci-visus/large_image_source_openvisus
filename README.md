@@ -79,7 +79,18 @@ docker compose run -d --entrypoint="sleep 999999999999" girder
 python /provision.py --sample-data --slicer-cli-image= 
 
 # run the web server
-girder serve --database mongodb://mongodb:27017/girder
+code /usr/local/lib/python3.10/site-packages/large_image_source_openvisus/__init__.py
+
+# OPTIONAL disable/enable caching
+code /etc/girder.cfg 
+
+# [large_image]
+# cache_backend, used for caching tiles, is either "memcached" or "python"
+# cache_backend = "python"
+# 'python' cache can use 1/(val) of the available memory
+# cache_python_memory_portion = 0
+
+girder serve --dev --database "mongodb://mongodb:27017/girder?socketTimeoutMS=3600000"
 
 # in a split window check logs
 tail -f ./.girder/logs/*.log 
@@ -147,21 +158,20 @@ Import_path=arco/david_subsampled/visus.idx
 Destination_ID=Select Samples/Images
 ```
 
-
-As you access the data, you will see the `/root/visus/cache` cache directory growing 
+As you access the data, you will see the cache directory `/root/visus/cache` growing 
 
 ### Create and upload arco dataset
 
 ```bash
 
 # convert to arco
-python3 -m OpenVisus copy-dataset --arco 1mb /mnt/d/visus-datasets/david_subsampled/visus.idx /mnt/d/visus-datasets/arco/david_subsampled/visus.idx
+python3 -m OpenVisus copy-dataset --arco 2mb /usr/sci/cedmav/visus1/data/david/david_subsampled.idx ./tmp/david_subsampled/visus.idx
 
-# compres (IMPORTANT!)
-python3 -m OpenVisus compress-dataset /mnt/d/visus-datasets/arco/david_subsampled/visus.idx
+# compress (IMPORTANT!)
+python3 -m OpenVisus compress-dataset ./tmp/david_subsampled/visus.idx
 
 # sync to S3
-aws --profile wasabi sync  /mnt/d/visus-datasets/arco/david_subsampled/ s3://visus-datasets/arco/
+aws --profile wasabi s3 sync --endpoint-url https://s3.us-west-1.wasabisys.com ./tmp/david_subsampled/ s3://visus-datasets/arco/david_subsampled/
 ```
 
 ### Run in production:
@@ -176,14 +186,24 @@ docker-compose up
 
 ### MongoDB
 
-Attach to mongodb
+(OPTIONAL) Install MongoDB client:
 
+```bash
+wget -qO- https://www.mongodb.org/static/pgp/server-7.0.asc | sudo tee /etc/apt/trusted.gpg.d/server-7.0.asc
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+sudo apt-get update
+sudo apt-get install -y mongodb-mongosh
+```
+
+Connect to mongodb
 
 ```bash
 mongosh
+
 show dbs
 use girder
 show collections
 db.assetstore.find()
 db.file.find()
 ```
+
