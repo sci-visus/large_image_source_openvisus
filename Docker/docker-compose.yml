@@ -1,0 +1,22 @@
+---
+version: '3'
+services:
+  girder:
+    image: arpa/dsa
+    build: .
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    volumes:
+      - assetstore:/assetstore
+      - /mnt/d/visus-datasets/david_subsampled:/visus-datasets/david_subsampled
+    depends_on:
+      - mongodb
+  mongodb:
+    image: "mongo:latest"
+    restart: unless-stopped
+    volumes:
+      - db:/data/db
+volumes:
+  assetstore:
+  db:

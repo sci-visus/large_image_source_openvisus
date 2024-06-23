@@ -1,0 +1,9 @@
+
+~*
+.DS_Store
+build/
+**/.vs/
+**/.vscode/
+**/__pycache__/
+**/.venv/
+
