@@ -1,34 +1,37 @@
-# large_image_source_openvisus
+# Instructions
+
+How to deploy an HistomicsUI with OpenVisus support
 
 ![Diagram](docs/diagram.png)
 
-
-
-# OpenVisus Plugin for Large Image
+# Create OpenVisus large image plugin
 
 For Windows:
 
 ```bash
 set PATH=%PATH%;c:\python310
+
+# create a virtual environment with all development packages
 python.exe -m venv .venv
 .venv\Scripts\activate
 python -m pip install --upgrade pip
-
 python -m pip install pooch wheel twine large-image[common] girder-large-image OpenVisusNoGui
 
-cd sources\openvisus
-
-# this is the develop mode, if you need to debug (i.e. it will store in site packages links to the current source files)
+# this is the develop mode
 python -m pip install -e .
 
-python test.py
+# test if the OpenVisus plugin works well
+# BROKEN right now (confusion between Girder and LargeImage plugin API). Not important?
+# python test.py D:/visus-datasets/david_subsampled/visus.idx ~test.png
+```
 
-# create and upload wheel
-# CHANGE the setup.py to contain the right version
-del dist\*.whl
+Create and upload wheel
+- **CHANGE the setup.py to contain the right project version**
+
+```bash
+del dist\*
 python setup.py bdist_wheel
 twine upload dist/*.whl
-rm -Rf ./build ./dist ./*egg-info
 # python -m pip install --no-cache-dir --force-reinstall large-image-source-openvisus
 ```
 
@@ -45,7 +48,7 @@ Notes:
 
 
 ```bash
-cd Docker
+cd deploy
 
 # change the large_image_source_openvisus version as needed
 

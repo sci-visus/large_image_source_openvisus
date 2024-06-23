@@ -1,4 +1,4 @@
-import os
+import os,sys
 from pprint import pprint
 import large_image
 import large_image_source_openvisus
@@ -10,7 +10,7 @@ def SaveImage(filename, img):
 
 # ///////////////////////////////////////////////////////////////////////////////
 if __name__ == '__main__' :
-  source = large_image.open(r'D:\visus-datasets\david_subsampled\visus.idx')
+  source = large_image.open(sys.argv[1])
   metadata = source.getMetadata()
   pprint(metadata)
 
@@ -24,5 +24,5 @@ if __name__ == '__main__' :
     output=dict(maxWidth=4096), 
     encoding='PNG')
   
-  SaveImage("~test.png",img)
+  SaveImage(sys.argv[2],img)
 
