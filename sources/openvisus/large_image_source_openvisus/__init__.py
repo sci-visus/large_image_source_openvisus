@@ -36,12 +36,42 @@ class OpenVisusTileSource(large_image.tilesource.TileSource, metaclass=LruCacheM
 
 		super().__init__(item, *args, **kwargs)
 
-		# need to extract from the assetstore the local path
-		# NOTE: you need to import the *.idx file in the `Samples` collection to see it
-		self._largeImagePath = str(self._getLargeImagePath()).strip()
-		assert(os.path.isfile(self._largeImagePath))
-                
-		self.db=ov.LoadDataset(self._largeImagePath)
+		from girder.models.file import File
+		file = File().load(item['largeImage']['fileId'], force=True)
+		print("file"*100,file)
+
+		# local file
+		try:
+			url = str(self._getLargeImagePath()).strip()
+			assert(os.path.isfile(url))
+		
+		# s3 file
+		except:
+
+			assetstore=File().getAssetstoreAdapter(file).assetstore
+
+			service    = assetstore['service']
+			region     = assetstore['region']
+			prefix     = assetstore['prefix']
+			bucket     = assetstore['bucket']
+			access_key = assetstore['accessKeyId']
+			secret_key = assetstore['secret']
+			s3Key      = file['s3Key']
+
+			endpoint_url=f"https://{service}/{prefix}" if prefix else f"https://{service}"
+
+			# compose url
+			url=f"{endpoint_url}/{bucket}/{s3Key}?"
+			if access_key:   url+=f"&access_key={access_key}"
+			if secret_key:   url+=f"&secret_key={secret_key}"
+			if region:       url+=f"&region={region}"
+			if endpoint_url: url+=f"&endpoint_url={endpoint_url}"
+
+			# TODO: caching is always enabled (!)
+			url+="&cached=arco"
+
+		print(f"LoadDataset url={url}")
+		self.db=ov.LoadDataset(url)
 		self.bitmask=self.db.getBitmask().toString()
 		print(self.bitmask)
 		self.sizeY,self.sizeX=self.db.shape
