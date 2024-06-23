@@ -2,7 +2,7 @@
 
 How to deploy an HistomicsUI with OpenVisus support
 
-![Diagram](docs/diagram.png)
+![Diagram](diagram.png)
 
 # Create OpenVisus large image plugin
 
@@ -32,7 +32,6 @@ Create and upload wheel
 del dist\*
 python setup.py bdist_wheel
 twine upload dist/*.whl
-# python -m pip install --no-cache-dir --force-reinstall large-image-source-openvisus
 ```
 
 
