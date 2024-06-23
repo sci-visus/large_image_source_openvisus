@@ -1,6 +1,15 @@
 # Instructions
 
-How to deploy an HistomicsUI with OpenVisus support
+How to deploy an HistomicsUI with OpenVisus support.
+
+Notes:
+- our deployment does NOT support tasks/processing/workers. It's a minimal DigitalSlideArchive (DSA) deployment
+
+Links:
+- https://github.com/DigitalSlideArchive/digital_slide_archive/tree/master/devops/minimal
+- https://github.com/girder/large_image
+- https://github.com/DigitalSlideArchive/HistomicsUI
+
 
 ![Diagram](diagram.png)
 
@@ -34,101 +43,143 @@ python setup.py bdist_wheel
 twine upload dist/*.whl
 ```
 
-
 ## HistomicsUI
 
-Links:
-- https://github.com/DigitalSlideArchive/digital_slide_archive/tree/master/devops/minimal
-- https://github.com/girder/large_image
-- https://github.com/DigitalSlideArchive/HistomicsUI
+Before starting
+- **Edit the Dockerfile and change the OpenVisus plugin version as needed**
 
-Notes:
-- the minimal version (vs dsa version) does NOT support tasks and workers
-
+(OPTIONAL) Preliminary clean all the stuff
+- NOTE: **this will destroy any existing data**
 
 ```bash
 cd deploy
-
-# change the large_image_source_openvisus version as needed
-
-docker-compose build
-```
-
-Clean all the stuff
-
-```bash
 docker-compose down --volumes
-docker container prune
-
 docker stop $(docker ps -a -q)
+docker container prune
 docker volume rm $(docker volume ls -q)
 ```
+
 
 If you want to debug inside the container
 
 ```bash
 
+cd deploy
+docker-compose build
+
 # start mongodb in background
 docker-compose up -d mongodb
 
-# so I can attach using VS COde
+# create a background container so I can attach using VS COde
 docker compose run -d --entrypoint="sleep 999999999999" girder 
 
 # **Attach in VS Code `Attach to running container`**
 
-# this may be slow the first time
+# this may be slow the first time, because it needs to download some `Samples` data
 python /provision.py --sample-data --slicer-cli-image= 
 
-# serve
+# run the web server
 girder serve --database mongodb://mongodb:27017/girder
 
 # in a split window check logs
 tail -f ./.girder/logs/*.log 
 ```
 
-Use the browser:
+Connect ising the browser:
+- NOTES: **DO NOT USE 0.0.0.0  since it does NOT work in WSL2**
 
-- http://localhost:8080  DO NOT USE 0.0.0.0  since it does NOT work in WSL2
-- USERNAME `admin` 
-- PASSWORD `password`
+```ini
+URL=http://localhost:8080  
+USERNAME=admin
+PASSWORD=password
+```
 
-To Add a local datasets:
-- remember to mount the datasets in `docker-compose.yml`
-- go to `Admin Console/AssetsStore` 
-- click `Import Data`:
-- `Destination ID` select `Samples/Images`
-- `Import Path` specify an existing file inside the filesystem
-
-To add S3 datasets:
-- go to `Admin Console/AssetsStore` 
-- Create an S3 assetstore
-  - Assetstore Name=`my_s3_assetstore`
-  - S3 bucket name `test-girder` (the bucket must pre-exists; or do `aws --profile wasabi s3 mb s3://<bucket-name-here>`)
-  - Prefix `empty` (or check SealStorage prefix)
-  - Access Key `XXXXX`
-  - Secret Access Key `YYYYY`
-  - Service `s3.us-west-1.wasabisys.com`
-  - Region `us-west-1`
-- *You may import a specific directory of keys within the bucket, or a specific key by path* 
-  - *If you wish to import the entire bucket into the selected destination, simply leave the import path field blank*
-  - *If you specify a directory, it will be imported recursively.*
+### Add a Local OpenVisus dataset
 
 
-In production:
+
+- remember to mount the datasets as a volume using `docker-compose.yml`
+- go to `Admin Console` 
+- Click `AssetsStores`
+- Click `Import Data`:
+
+```ini
+Import_Path=/visus-datasets/david_subsampled/visus.idx # data must be mounted inside the Docker container
+Destination_ID=Select Samples/Images
+```
+
+Now you should see the dataset and it should work.
+
+
+### Add a remove OpenVisus dataset
+
+- You need to have all the files in a bucket (i.e. the current Girder import seems not to pull updates from a bucket)
+- go to `Admin Console` 
+- Click `AssetsStores`
+- Click on  an `Create new Amazon S3 assetstore`
+
+```ini
+Assetstore_name=openvisus_s3_assetstore
+
+# the bucket must pre-exists
+S3_bucket_name=visus-datasets
+
+# leave empty, or check if you need a prefix like for Seal Storage
+Prefix= 
+
+# change as needed
+Access_Key=XXXXX
+Secret_Access_Key=YYYYY
+Service=s3.us-west-1.wasabisys.com
+Region=us-west-1
+```
+
+Now import data
+- Click on "Import Data" on the new S3 assets store section
+- You may import a specific directory of keys within the bucket, or a specific key by path 
+  - If you wish to import the entire bucket into the selected destination, simply leave the import path field blank
+  - If you specify a directory, it will be imported recursively.
+
+```ini
+#  s3://visus-datasets/arco/david_subsampled/visus.idx
+Import_path=arco/david_subsampled/visus.idx
+
+Destination_ID=Select Samples/Images
+```
+
+
+As you access the data, you will see the `/root/visus/cache` cache directory growing 
+
+### Create and upload arco dataset
 
 ```bash
-# NOTE: it could take several runs (and CTRL+C) to make it working on WSL2
+
+# convert to arco
+python3 -m OpenVisus copy-dataset --arco 1mb /mnt/d/visus-datasets/david_subsampled/visus.idx /mnt/d/visus-datasets/arco/david_subsampled/visus.idx
+
+# compres (IMPORTANT!)
+python3 -m OpenVisus compress-dataset /mnt/d/visus-datasets/arco/david_subsampled/visus.idx
+
+# sync to S3
+aws --profile wasabi sync  /mnt/d/visus-datasets/arco/david_subsampled/ s3://visus-datasets/arco/
+```
+
+### Run in production:
+
+- NOTE: it could take several runs (and CTRL+C) to make it working on WSL2
+
+```bash
+cd deploy
+docker-compose build
 docker-compose up
 ```
 
-## MongoDB
+### MongoDB
 
-# Attach to mongodb
+Attach to mongodb
 
 
 ```bash
-
-
 mongosh
 show dbs
 use girder
