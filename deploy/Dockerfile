@@ -36,7 +36,7 @@ COPY girder.cfg /etc/.
 COPY provision.py .
 
 # enable OpenVisus for large-image and ginder
-RUN pip install large_image_source_openvisus==1.0.2
+RUN pip install large_image_source_openvisus==1.0.3
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 

@@ -36,6 +36,7 @@ python -m pip install -e .
 
 Create and upload wheel
 - **CHANGE the setup.py to contain the right project version**
+- **ALSO CHANGE deploy/Dockerfile**
 
 ```bash
 del dist\*
@@ -60,7 +61,25 @@ docker volume rm $(docker volume ls -q)
 ```
 
 
-If you want to debug inside the container
+Connect using the browser:
+- NOTES: **DO NOT USE 0.0.0.0  since it does NOT work in WSL2**
+
+```ini
+URL=http://localhost:8080  
+USERNAME=admin
+PASSWORD=password
+```
+
+To Run in production:
+
+```bash
+cd deploy
+docker-compose build
+docker-compose up
+```
+
+
+To Run in debug mode
 
 ```bash
 
@@ -96,18 +115,8 @@ girder serve --dev --database "mongodb://mongodb:27017/girder?socketTimeoutMS=36
 tail -f ./.girder/logs/*.log 
 ```
 
-Connect ising the browser:
-- NOTES: **DO NOT USE 0.0.0.0  since it does NOT work in WSL2**
-
-```ini
-URL=http://localhost:8080  
-USERNAME=admin
-PASSWORD=password
-```
 
 ### Add a Local OpenVisus dataset
-
-
 
 - remember to mount the datasets as a volume using `docker-compose.yml`
 - go to `Admin Console` 
@@ -174,15 +183,7 @@ python3 -m OpenVisus compress-dataset ./tmp/david_subsampled/visus.idx
 aws --profile wasabi s3 sync --endpoint-url https://s3.us-west-1.wasabisys.com ./tmp/david_subsampled/ s3://visus-datasets/arco/david_subsampled/
 ```
 
-### Run in production:
 
-- NOTE: it could take several runs (and CTRL+C) to make it working on WSL2
-
-```bash
-cd deploy
-docker-compose build
-docker-compose up
-```
 
 ### MongoDB
 

@@ -9,7 +9,8 @@ services:
       - 8080:8080
     volumes:
       - assetstore:/assetstore
-      - /mnt/d/visus-datasets/david_subsampled:/visus-datasets/david_subsampled
+      # if you need to add a local dataset
+      # - /mnt/d/visus-datasets/david_subsampled:/visus-datasets/david_subsampled
     depends_on:
       - mongodb
   mongodb:
