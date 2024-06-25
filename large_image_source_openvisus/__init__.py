@@ -38,7 +38,7 @@ class OpenVisusTileSource(large_image.tilesource.TileSource, metaclass=LruCacheM
 
 		from girder.models.file import File
 		file = File().load(item['largeImage']['fileId'], force=True)
-		print("file"*100,file)
+		print("girder file",file)
 
 		# local file
 		try:
@@ -83,13 +83,16 @@ class OpenVisusTileSource(large_image.tilesource.TileSource, metaclass=LruCacheM
 		self.tileWidth =2**len([it for it in self.bitmask if it=='0'])
 		self.tileHeight=2**len([it for it in self.bitmask if it=='1'])
 		print(f"pow2 size {self.tileWidth} {self.tileHeight}")
+
+		# i.e. I DO NOT want V....1111 or V....000 otherwise the tile size cannot be constant
+		assert(self.bitmask.endswith("01") or self.bitmask.endswith("10"))
 		
 		# the right part must be 01 or 10 this to keep the tile size constant
 		s=self.bitmask
 		while (s.endswith("01") or s.endswith("10")):
     
 			# do not go too small
-			if self.tileWidth*self.tileHeight==self.min_tile_pixels:
+			if self.tileWidth*self.tileHeight<=self.min_tile_pixels:
 				break
   
 			self.tileWidth >>=1
@@ -97,6 +100,8 @@ class OpenVisusTileSource(large_image.tilesource.TileSource, metaclass=LruCacheM
 			self.levels+=1
 			s=s[0:-2]
   
+
+		print(f"tile size {self.tileWidth} {self.tileHeight}")
 		self.minLevel = 0
 		self.maxLevel = self.levels-1
   

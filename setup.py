@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 description = 'OpenVisus tilesource for large_image.'
 long_description = description + '\n\nSee the large-image package for more details.'
 
-project_version="1.0.5"
+project_version="1.0.6"
 
 setup(
     name='large-image-source-openvisus',
