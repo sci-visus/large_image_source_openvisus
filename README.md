@@ -33,8 +33,8 @@ python test.py D:/visus-datasets/david_subsampled/visus.idx ~test.png
 Change `setup.py` to contain the project version and upload the wheel:
 
 ```bash
-del /Q dist\*
-python setup.py bdist_wheel
+rm -f dist/*
+python3 setup.py bdist_wheel
 twine upload dist/*.whl
 ```
 
