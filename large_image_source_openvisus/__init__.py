@@ -23,10 +23,11 @@ class OpenVisusTileSource(large_image.tilesource.TileSource, metaclass=LruCacheM
 	# constructor
 	def __init__(self, item=None, *args, **kwargs):
 
-		# doto
-		#from large_image.cache_util import cachesClear,cachesInfo
-		#cachesClear()
-		#cachesInfo()
+		# in debug mode you may need this
+		if False:
+			from large_image.cache_util import cachesClear,cachesInfo
+			cachesClear()
+			cachesInfo()
 
 		print(f"OpenVisusTileSource::__init__({item},args={args}, kwargs={kwargs})")
 
@@ -104,13 +105,13 @@ class OpenVisusTileSource(large_image.tilesource.TileSource, metaclass=LruCacheM
 		print(f"tile size {self.tileWidth} {self.tileHeight}")
 		self.minLevel = 0
 		self.maxLevel = self.levels-1
-  
-		#self.dtype=self.db.getField().dtype
-		#self.bandCount=1
+
+		# self._dtype = baseArray.dtype
+		dtype=self.db.getField().dtype
+		self._bandCount=dtype.ncomponents() 
   
 		# TODO
-		# fields? how to support multiple fields?
-		# bands?  I think I just return the image
+		# fields? how to support multiple fields? have no idea... it's needed for super-resolution
 		# frames? could be 3d or with time, I do not think both
 		#         if 3d then I need to make sure the Z samples are all on the left, like V22220101010101....
 		
