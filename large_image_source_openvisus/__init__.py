@@ -4,6 +4,7 @@ import numpy as np
 
 import large_image
 from large_image.cache_util import LruCacheMetaclass, methodcache
+from large_image.cache_util import cachesClear,cachesInfo
 
 import OpenVisus as ov
 
@@ -12,7 +13,6 @@ class OpenVisusTileSource(large_image.tilesource.TileSource, metaclass=LruCacheM
 
 	cacheName = 'tilesource'
 	name = 'openvisus'
- 
 	min_tile_pixels =256*256
 
 	extensions = {
@@ -23,11 +23,9 @@ class OpenVisusTileSource(large_image.tilesource.TileSource, metaclass=LruCacheM
 	# constructor
 	def __init__(self, item=None, *args, **kwargs):
 
-		# in debug mode you may need this
-		if False:
-			from large_image.cache_util import cachesClear,cachesInfo
-			cachesClear()
-			cachesInfo()
+		# cachesClear()
+		# cachesInfo()
+		self.mirror_y=False
 
 		print(f"OpenVisusTileSource::__init__({item},args={args}, kwargs={kwargs})")
 
@@ -147,16 +145,16 @@ class OpenVisusTileSource(large_image.tilesource.TileSource, metaclass=LruCacheM
 		x2 = min(x1+dx,self.sizeX)
 		y2 = min(y1+dy,self.sizeY)
   
-		# mirror y
-		y1,y2=self.sizeY-y2,self.sizeY-y1
+		if self.mirror_y:
+			y1,y2=self.sizeY-y2,self.sizeY-y1
 
 		print(f"getTile x={x} y={y} z={z} tileWidth={self.tileWidth} tileHeight={self.tileHeight} x1={x1} y1={y1} x2={x2} y2={y2} max_resolution={max_resolution}")
 		tile=self.db.read(x=[x1,x2],y=[y1,y2],max_resolution=max_resolution, access=self.access)
 		# can be smaller because I am on the boundary
 		assert(tile.shape[0]<=self.tileHeight and tile.shape[1]<=self.tileWidth)
 
-		# mirror
-		tile=np.flip(tile, axis=0)
+		if self.mirror_y:
+			tile=np.flip(tile, axis=0)
 	
 		return self._outputTile(tile, large_image.constants.TILE_FORMAT_NUMPY, x, y, z, **kwargs)
 
